@@ -9,7 +9,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: process.env.FRONTEND_ORIGIN?.split(',') || '*',
+    origin: process.env.FRONTEND_ORIGIN?.split(',') || [
+      'https://homme-tissu-users.vercel.app',
+      'http://localhost:5173',
+      'http://localhost:3000',
+    ],
   });
 
   const uploadsPath = path.join(process.cwd(), 'uploads');
