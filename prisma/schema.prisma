@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Veste {
+  id          Int           @id @default(autoincrement())
+  titre       String
+  description String
+  images      VesteImage[]
+  isPublished Boolean       @default(false)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model VesteImage {
+  id        Int      @id @default(autoincrement())
+  vesteId   Int
+  veste     Veste    @relation(fields: [vesteId], references: [id], onDelete: Cascade)
+  mediaUrl  String   // Chemin du fichier sur le serveur
+  mediaType String   // "image" ou "video"
+  fileSize  Int      // Taille en octets
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([vesteId])
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AtelierProfile {
+  id           Int     @id
+  name         String
+  welcomeText  String  @db.Text
+  description  String  @db.Text
+  logoLeftUrl  String? @db.Text
+  logoRightUrl String? @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
