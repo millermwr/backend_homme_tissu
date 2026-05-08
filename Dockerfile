@@ -13,5 +13,5 @@ RUN npm run build
 
 EXPOSE 10000
 
-# On lance directement le main
-CMD ["node", "dist/main"]
+# On lance le fichier d'entree genere par Nest
+CMD ["node", "dist/src/main.js"]
