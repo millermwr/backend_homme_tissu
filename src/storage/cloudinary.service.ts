@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadGatewayException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { v2 as cloudinary } from 'cloudinary';
 
 export interface CloudinaryUploadResult {
@@ -9,6 +14,8 @@ export interface CloudinaryUploadResult {
 
 @Injectable()
 export class CloudinaryService {
+  private readonly logger = new Logger(CloudinaryService.name);
+
   constructor() {
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
     const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
@@ -21,6 +28,10 @@ export class CloudinaryService {
         api_secret: apiSecret,
         secure: true,
       });
+    } else {
+      this.logger.warn(
+        'Cloudinary is not configured. Check CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.',
+      );
     }
   }
 
@@ -37,7 +48,7 @@ export class CloudinaryService {
     options: { folder: string; resourceType?: 'image' | 'video' | 'auto' },
   ): Promise<CloudinaryUploadResult> {
     if (!this.isConfigured()) {
-      throw new Error(
+      throw new ServiceUnavailableException(
         'Cloudinary non configure. Renseignez CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY et CLOUDINARY_API_SECRET.',
       );
     }
@@ -50,7 +61,15 @@ export class CloudinaryService {
         },
         (error, result) => {
           if (error || !result) {
-            reject(error ?? new Error('Upload Cloudinary impossible'));
+            const message =
+              error instanceof Error
+                ? error.message
+                : typeof error === 'string'
+                  ? error
+                  : 'Upload Cloudinary impossible';
+            reject(
+              new BadGatewayException(`Upload Cloudinary impossible: ${message}`),
+            );
             return;
           }
 
