@@ -241,21 +241,27 @@ export class VestesService implements OnModuleInit {
 
     await this.db.execute('DELETE FROM Veste WHERE id = ?', [id]);
 
-    for (const image of imageRows) {
-      if (image.mediaPublicId) {
-        await this.cloudinaryService.deleteByPublicId(image.mediaPublicId);
-      } else if (image.mediaUrl.startsWith('/uploads/')) {
-        const filePath = path.join(
-          getUploadsDir(),
-          path.basename(image.mediaUrl),
-        );
-        try {
-          await unlink(filePath);
-        } catch {
-          // Ignore missing file errors.
+    await Promise.allSettled(
+      imageRows.map(async (image) => {
+        if (image.mediaPublicId) {
+          await this.cloudinaryService.deleteByPublicId(image.mediaPublicId);
+          return;
         }
-      }
-    }
+
+        if (image.mediaUrl.startsWith('/uploads/')) {
+          const filePath = path.join(
+            getUploadsDir(),
+            path.basename(image.mediaUrl),
+          );
+
+          try {
+            await unlink(filePath);
+          } catch {
+            // Ignore missing file errors.
+          }
+        }
+      }),
+    );
 
     return { message: 'Modele supprime' };
   }
