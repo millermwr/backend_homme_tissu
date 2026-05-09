@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { unlink } from 'node:fs/promises';
 import path from 'node:path';
+import { getUploadsDir } from '../storage/uploads-path';
 
 interface CreateVesteDto {
   titre: string;
@@ -130,8 +131,8 @@ export class VestesService implements OnModuleInit {
 
     if (image.mediaUrl.startsWith('/uploads/')) {
       const filePath = path.join(
-        process.cwd(),
-        image.mediaUrl.replace(/^\//, ''),
+        getUploadsDir(),
+        path.basename(image.mediaUrl),
       );
       try {
         await unlink(filePath);
@@ -223,8 +224,8 @@ export class VestesService implements OnModuleInit {
     for (const image of imageRows) {
       if (image.mediaUrl.startsWith('/uploads/')) {
         const filePath = path.join(
-          process.cwd(),
-          image.mediaUrl.replace(/^\//, ''),
+          getUploadsDir(),
+          path.basename(image.mediaUrl),
         );
         try {
           await unlink(filePath);

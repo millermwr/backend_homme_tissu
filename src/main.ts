@@ -2,8 +2,8 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { existsSync, mkdirSync } from 'node:fs';
-import path from 'node:path';
 import express from 'express';
+import { getUploadsDir } from './storage/uploads-path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -31,7 +31,7 @@ async function bootstrap() {
     },
   });
 
-  const uploadsPath = path.join(process.cwd(), 'uploads');
+  const uploadsPath = getUploadsDir();
   if (!existsSync(uploadsPath)) {
     mkdirSync(uploadsPath, { recursive: true });
   }

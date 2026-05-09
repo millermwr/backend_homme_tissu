@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
+import { getUploadsDir } from './uploads-path';
 
 @Injectable()
 export class StorageService {
@@ -43,7 +44,7 @@ export class StorageService {
       );
       usedBytes = Number(rows[0]?.sum ?? 0);
     } catch {
-      usedBytes = await this.getUploadsDirectorySize(path.join(process.cwd(), 'uploads'));
+      usedBytes = await this.getUploadsDirectorySize(getUploadsDir());
     }
 
     const quotaMb = Number(process.env.STORAGE_QUOTA_MB ?? 1024);

@@ -15,8 +15,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import path from 'node:path';
 import { existsSync, mkdirSync } from 'node:fs';
+import { getUploadsDir } from '../storage/uploads-path';
 
-const uploadsDir = path.join(process.cwd(), 'uploads');
+const uploadsDir = getUploadsDir();
 if (!existsSync(uploadsDir)) {
   mkdirSync(uploadsDir, { recursive: true });
 }

@@ -70,6 +70,13 @@ $ mau deploy
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
+### Upload storage on Render
+
+This project now supports a configurable uploads directory through `UPLOADS_DIR`.
+
+For Render, point `UPLOADS_DIR` to a mounted persistent disk path, for example `/var/data/uploads`.
+If `UPLOADS_DIR` is not set, the app falls back to a local `uploads` folder, which is not persistent across cold starts or redeploys.
+
 ## Resources
 
 Check out a few resources that may come in handy when working with NestJS:
