@@ -15,19 +15,15 @@ import {
 import { VestesService } from './vestes.service';
 import { AdminAuthGuard } from '../auth/admin-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import path from 'node:path';
-import { existsSync, mkdirSync } from 'node:fs';
-import { getUploadsDir } from '../storage/uploads-path';
-
-const uploadsDir = getUploadsDir();
-if (!existsSync(uploadsDir)) {
-  mkdirSync(uploadsDir, { recursive: true });
-}
+import { memoryStorage } from 'multer';
+import { CloudinaryService } from '../storage/cloudinary.service';
 
 @Controller()
 export class VestesController {
-  constructor(private readonly vestesService: VestesService) {}
+  constructor(
+    private readonly vestesService: VestesService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Get('vestes')
   getPublicCatalog(): Promise<unknown> {
@@ -44,16 +40,7 @@ export class VestesController {
   @Post('admin/vestes/upload')
   @UseInterceptors(
     FileInterceptor('media', {
-      storage: diskStorage({
-        destination: uploadsDir,
-        filename: (req, file, cb) => {
-          const extension = path.extname(file.originalname);
-          const baseName = path
-            .basename(file.originalname, extension)
-            .replace(/[^a-zA-Z0-9-_]/g, '-');
-          cb(null, `${Date.now()}-${baseName}${extension}`);
-        },
-      }),
+      storage: memoryStorage(),
       limits: {
         fileSize: 100 * 1024 * 1024,
       },
@@ -74,15 +61,21 @@ export class VestesController {
       },
     }),
   )
-  uploadMedia(@UploadedFile() file: Express.Multer.File) {
+  async uploadMedia(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('Aucun fichier recu');
     }
 
+    const uploadResult = await this.cloudinaryService.uploadBuffer(file.buffer, {
+      folder: 'atelier/vestes',
+      resourceType: file.mimetype.startsWith('video/') ? 'video' : 'image',
+    });
+
     return {
-      mediaUrl: `/uploads/${file.filename}`,
+      mediaUrl: uploadResult.mediaUrl,
+      mediaPublicId: uploadResult.mediaPublicId,
       mediaType: file.mimetype.startsWith('video/') ? 'video' : 'image',
-      fileSize: file.size,
+      fileSize: uploadResult.fileSize,
       originalName: file.originalname,
     };
   }
@@ -107,7 +100,13 @@ export class VestesController {
   @Post('admin/vestes/:id/images')
   addImage(
     @Param('id', ParseIntPipe) vesteId: number,
-    @Body() body: { mediaUrl: string; mediaType: string; fileSize: number },
+    @Body()
+    body: {
+      mediaUrl: string;
+      mediaPublicId?: string | null;
+      mediaType: string;
+      fileSize: number;
+    },
   ): Promise<unknown> {
     if (!body.mediaUrl || !body.mediaType) {
       throw new BadRequestException('mediaUrl et mediaType requis');
@@ -116,6 +115,7 @@ export class VestesController {
     return this.vestesService.addImage(
       vesteId,
       body.mediaUrl,
+      body.mediaPublicId ?? null,
       body.mediaType,
       body.fileSize || 0,
     );

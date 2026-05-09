@@ -70,12 +70,19 @@ $ mau deploy
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
-### Upload storage on Render
+### Free image/video storage with Cloudinary
 
-This project now supports a configurable uploads directory through `UPLOADS_DIR`.
+This project now supports Cloudinary so uploads stay available even if Render restarts or the instance sleeps.
 
-For Render, point `UPLOADS_DIR` to a mounted persistent disk path, for example `/var/data/uploads`.
-If `UPLOADS_DIR` is not set, the app falls back to a local `uploads` folder, which is not persistent across cold starts or redeploys.
+Set these environment variables on Render:
+
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+- `FRONTEND_ORIGIN` (your Vercel URL, for example `https://homme-tissu-users.vercel.app`)
+
+With this setup, the backend sends uploaded images and videos directly to Cloudinary and stores the returned `mediaUrl` and `mediaPublicId` in PostgreSQL.
+The old local `uploads` folder is kept only as a fallback for legacy data.
 
 ## Resources
 

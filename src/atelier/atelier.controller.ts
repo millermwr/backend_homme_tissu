@@ -12,19 +12,15 @@ import {
 import { AtelierService } from './atelier.service';
 import { AdminAuthGuard } from '../auth/admin-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import path from 'node:path';
-import { existsSync, mkdirSync } from 'node:fs';
-import { getUploadsDir } from '../storage/uploads-path';
-
-const uploadsDir = getUploadsDir();
-if (!existsSync(uploadsDir)) {
-  mkdirSync(uploadsDir, { recursive: true });
-}
+import { memoryStorage } from 'multer';
+import { CloudinaryService } from '../storage/cloudinary.service';
 
 @Controller()
 export class AtelierController {
-  constructor(private readonly atelierService: AtelierService) {}
+  constructor(
+    private readonly atelierService: AtelierService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Get('atelier/profile')
   getPublicProfile(): Promise<unknown> {
@@ -57,16 +53,7 @@ export class AtelierController {
   @Post('admin/atelier/upload-logo')
   @UseInterceptors(
     FileInterceptor('logo', {
-      storage: diskStorage({
-        destination: uploadsDir,
-        filename: (req, file, cb) => {
-          const extension = path.extname(file.originalname);
-          const baseName = path
-            .basename(file.originalname, extension)
-            .replace(/[^a-zA-Z0-9-_]/g, '-');
-          cb(null, `${Date.now()}-logo-${baseName}${extension}`);
-        },
-      }),
+      storage: memoryStorage(),
       limits: {
         fileSize: 10 * 1024 * 1024,
       },
@@ -79,14 +66,20 @@ export class AtelierController {
       },
     }),
   )
-  uploadLogo(@UploadedFile() file: Express.Multer.File) {
+  async uploadLogo(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('Aucun logo recu');
     }
 
+    const uploadResult = await this.cloudinaryService.uploadBuffer(file.buffer, {
+      folder: 'atelier/logos',
+      resourceType: 'image',
+    });
+
     return {
-      mediaUrl: `/uploads/${file.filename}`,
-      fileSize: file.size,
+      mediaUrl: uploadResult.mediaUrl,
+      mediaPublicId: uploadResult.mediaPublicId,
+      fileSize: uploadResult.fileSize,
       originalName: file.originalname,
     };
   }

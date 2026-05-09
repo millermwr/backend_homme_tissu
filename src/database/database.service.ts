@@ -9,6 +9,7 @@ const columnKeyMap: Record<string, string> = {
   mediaurl: 'mediaUrl',
   mediatype: 'mediaType',
   filesize: 'fileSize',
+  mediapublicid: 'mediaPublicId',
   welcometext: 'welcomeText',
   phonenumber: 'phoneNumber',
   logolefturl: 'logoLeftUrl',
